@@ -163,8 +163,15 @@ export function createCard(input: ValidIssueCard): IssuedCard {
 
   const cardNumber = generateCardNumber()
   const now = new Date().toISOString()
+  // Derived from the highest id in use, not the array length: length would
+  // hand out a duplicate the first time a card is ever removed.
+  const nextId =
+    store.cards.reduce(
+      (highest, card) => Math.max(highest, Number(card.id.slice(5)) || 0),
+      0,
+    ) + 1
   const card: Card = {
-    id: `card_${String(store.cards.length + 1).padStart(4, "0")}`,
+    id: `card_${String(nextId).padStart(4, "0")}`,
     nickname: input.nickname,
     merchantId: input.merchantId,
     last4: lastFour(cardNumber),
