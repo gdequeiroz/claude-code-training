@@ -17,12 +17,12 @@ There is no card feature. Not a route, not a type, not a handler. This is additi
 
 - `src/app/` — routes are `overview`, `payments`, `disputes`, `payouts`. `merchant-console/CLAUDE.md` states plainly: "Cards is NWP-201 and does not exist yet."
 - `src/data/types.ts` — `Currency`, `Payment`, `Merchant`, `Refund`, `Dispute`, `Payout`. **No `Card`.** `Payment.last4` is `string | null`, so last-four-as-string is the established shape.
-- `src/data/store.ts:20-27` — the `Store` interface holds `merchants`, `payments`, `refunds`, `disputes`, `payouts`. Cards is a sixth collection. The store is pinned to `globalThis` (`store.ts:35-38`) so dev-server reloads do not hand every request a fresh copy — **card writes will survive hot reload but not a restart, which is correct and is NWP-203's problem, not ours.**
+- `src/data/store.ts:20-27` — the `Store` interface holds five collections; cards is a sixth. Pinned to `globalThis` so dev reloads keep writes; a restart drops them, which is NWP-203's problem, not ours.
 - `src/data/generate.ts:16-18` — deterministic seed (`SEED = 20260813`) via `mulberry32`, with `pick()` and `between()` helpers. Seeded cards must use the same PRNG so everyone in the room gets identical records.
-- `src/lib/money.ts:16` — `formatMoney(minorUnits, currency)` exists. `src/lib/money.ts:47` — **`parseAmountToMinorUnits(input)` already exists** and already returns `null` for anything that is not `\d+(\.\d{1,2})?`. The issue form's limit field parses through this. Writing a second parser is the defect the rubric is looking for.
-- `src/lib/dates.ts:32` — `formatDate` for tables; `formatInZone(iso, timeZone)` for merchant-local display, used at `src/app/payments/[id]/page.tsx`.
-- `src/components/` — `Button`, `Input`, `Select`, `Badge`, `Table`, `Divider`, `Drawer`. **No `Dialog` and no `Checkbox`**, though `.claude/rules/components.md` claims a Dialog exists. `Drawer.tsx:3` is built on `@radix-ui/react-dialog`, which is already a dependency — a Dialog primitive costs no new package.
-- `src/components/ui/payments/StatusBadge.tsx` — the established pattern for a status pill. Cards get their own rather than overloading this one.
+- `src/lib/money.ts:16,47` — `formatMoney` and **`parseAmountToMinorUnits` already exist**; the limit field parses through the latter. A second parser is the defect the rubric looks for.
+- `src/lib/dates.ts:32` — `formatDate` for tables, `formatInZone` for merchant-local display.
+- `src/components/` — `Button`, `Input`, `Select`, `Badge`, `Table`, `Divider`, and `Drawer.tsx`, itself built on `@radix-ui/react-dialog`. The issue form uses the Drawer rather than adding a primitive.
+- `src/components/ui/payments/StatusBadge.tsx` — the status-pill pattern. Cards get their own rather than overloading it.
 - `src/components/ui/navigation/AppSidebar.tsx:26-50` — `navigation` array driven by `siteConfig.baseLinks` (`src/app/siteConfig.ts:5-10`). Cards needs an entry in both. `CreditCard` from lucide is already imported there for Payments.
 - `src/app/api/payments/route.ts` — the only route-handler shape in the repo: parse, delegate to the data layer, `NextResponse.json`. Cards routes follow it.
 
@@ -50,9 +50,7 @@ Add cards as a sixth store collection and a self-contained slice: a pure `src/li
 
 **On spend:** `Card.spent` is an integer-minor-units field on the record, `0` for every newly issued card, with six seeded cards carrying realistic spend so the detail view and the amber-past-80% threshold have something real to show. Considered deriving spend from payments by merchant — rejected, because that is merchant volume, not card spend, and showing it as card spend would be a lie the UI tells confidently.
 
-**Considered and rejected:** adding a `cardAuthorizations` seed collection and summing it per card. Truer to how issuing actually works, and it makes "honest spend" literal — but it is a second seed type the ticket did not ask for, and the clock is the binding constraint.
-
-**Also rejected:** storing the generated number encrypted on the record so it could be re-revealed. `.claude/rules/cards.md` forbids it in as many words, and "we could decrypt it" is exactly the property reveal-once exists to remove.
+**Considered and rejected:** a `cardAuthorizations` seed collection summed per card — truer to how issuing works and makes "honest spend" literal, but a second seed type the ticket did not ask for. Also rejected: storing the number encrypted so it could be re-revealed; `.claude/rules/cards.md` forbids it, and "we could decrypt it" is the property reveal-once exists to remove.
 
 ## File map
 
@@ -70,11 +68,9 @@ Add cards as a sixth store collection and a self-contained slice: a pure `src/li
 | `src/app/cards/issue-dialog.tsx` | add | `"use client"` — the issue form and the one-time reveal screen. |
 | `src/app/cards/card-actions.tsx` | add | `"use client"` — freeze/unfreeze/cancel without a full page reload. |
 | `src/app/cards/[id]/page.tsx` | add | Detail: full record, spend bar, event history. |
-| `src/components/Dialog.tsx` | add | The primitive `components.md` already claims exists. On `@radix-ui/react-dialog`, already a dependency. |
 | `src/components/ui/cards/CardStatusBadge.tsx` | add | Mirrors `ui/payments/StatusBadge.tsx` rather than overloading it. |
 | `src/app/siteConfig.ts` | change | `baseLinks.cards`. |
 | `src/components/ui/navigation/AppSidebar.tsx` | change | Cards nav entry. |
-| `tailwind.config.ts` | change | `dialogOverlayShow` / `dialogContentShow` keyframes — `Drawer.tsx:52` already references the first one and it was never defined. |
 
 ## Plan
 

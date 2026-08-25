@@ -20,40 +20,26 @@ export default async function CardDetail({
   if (!card) notFound()
 
   const merchant = merchantById(card.merchantId)!
-  const remaining = card.spendLimit - card.spent
   // Integer minor units throughout; the percentage is display only.
-  const usedPercent =
+  const used =
     card.spendLimit > 0
       ? Math.min(100, Math.round((card.spent / card.spendLimit) * 100))
       : 0
-  const nearLimit = usedPercent >= 80
+  const nearLimit = used >= 80
 
-  const facts: { label: string; value: string; capitalize?: boolean }[] = [
-    { label: "Merchant", value: merchant.name },
-    { label: "Number", value: maskCard(card.last4) },
-    {
-      label: "Spend limit",
-      value: formatMoney(card.spendLimit, card.currency),
-    },
-    { label: "Currency", value: card.currency },
-    {
-      label: "Category lock",
-      value: card.category ?? "None",
-      capitalize: true,
-    },
-    { label: "Card ID", value: card.id },
-    {
-      label: "Issued",
-      value: formatInZone(card.createdAt, merchant.timezone),
-    },
+  const facts: [string, string, boolean?][] = [
+    ["Merchant", merchant.name],
+    ["Number", maskCard(card.last4)],
+    ["Spend limit", formatMoney(card.spendLimit, card.currency)],
+    ["Currency", card.currency],
+    ["Category lock", card.category ?? "None", true],
+    ["Card ID", card.id],
+    ["Issued", formatInZone(card.createdAt, merchant.timezone)],
   ]
 
   return (
     <div className="p-4 sm:p-6">
-      <Link
-        href="/cards"
-        className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-50"
-      >
+      <Link href="/cards" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-50">
         ← Cards
       </Link>
 
@@ -80,10 +66,9 @@ export default async function CardDetail({
             Spend against limit
           </h2>
           <p className="text-sm tabular-nums text-gray-500 dark:text-gray-500">
-            {formatMoney(remaining, card.currency)} remaining
+            {formatMoney(card.spendLimit - card.spent, card.currency)} remaining
           </p>
         </div>
-
         <div className="mt-3 flex items-baseline gap-2">
           <span className="text-2xl font-semibold tabular-nums text-gray-900 dark:text-gray-50">
             {formatMoney(card.spent, card.currency)}
@@ -92,61 +77,50 @@ export default async function CardDetail({
             of {formatMoney(card.spendLimit, card.currency)}
           </span>
         </div>
-
         <div
           className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800"
           role="progressbar"
-          aria-valuenow={usedPercent}
+          aria-valuenow={used}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label={`${usedPercent}% of the spend limit used`}
+          aria-label={`${used}% of the spend limit used`}
         >
           <div
             className={cx(
               "h-full rounded-full transition-all",
-              nearLimit
-                ? "bg-amber-500 dark:bg-amber-500"
-                : "bg-blue-500 dark:bg-blue-500",
+              nearLimit ? "bg-amber-500" : "bg-blue-500",
             )}
-            style={{ width: `${usedPercent}%` }}
+            style={{ width: `${used}%` }}
           />
         </div>
-
         <p
           className={cx(
             "mt-2 text-sm tabular-nums",
-            nearLimit
-              ? "text-amber-700 dark:text-amber-500"
-              : "text-gray-500 dark:text-gray-500",
+            nearLimit ? "text-amber-700 dark:text-amber-500" : "text-gray-500",
           )}
         >
-          {usedPercent}% used
-          {nearLimit && " · close to the limit"}
+          {used}% used{nearLimit && " · close to the limit"}
         </p>
       </section>
 
       <Divider />
 
       <section aria-label="Card record">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          Record
-        </h2>
+        <h2 className="text-sm font-medium text-gray-900 dark:text-gray-50">Record</h2>
         <dl className="mt-3 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
-          {facts.map((fact) => (
+          {facts.map(([label, value, capitalize]) => (
             <div
-              key={fact.label}
+              key={label}
               className="flex justify-between gap-4 border-b border-gray-100 pb-2 dark:border-gray-900"
             >
-              <dt className="text-sm text-gray-500 dark:text-gray-500">
-                {fact.label}
-              </dt>
+              <dt className="text-sm text-gray-500 dark:text-gray-500">{label}</dt>
               <dd
                 className={cx(
                   "text-sm text-gray-900 dark:text-gray-50",
-                  fact.capitalize && "capitalize",
+                  capitalize && "capitalize",
                 )}
               >
-                {fact.value}
+                {value}
               </dd>
             </div>
           ))}
@@ -156,12 +130,10 @@ export default async function CardDetail({
       <Divider />
 
       <section aria-label="History">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          History
-        </h2>
+        <h2 className="text-sm font-medium text-gray-900 dark:text-gray-50">History</h2>
         <ol className="mt-3 space-y-3">
-          {card.events.map((event, index) => (
-            <li key={index} className="flex gap-3 text-sm">
+          {card.events.map((event, i) => (
+            <li key={i} className="flex gap-3 text-sm">
               <span
                 className="mt-1.5 size-1.5 shrink-0 rounded-full bg-gray-300 dark:bg-gray-700"
                 aria-hidden="true"

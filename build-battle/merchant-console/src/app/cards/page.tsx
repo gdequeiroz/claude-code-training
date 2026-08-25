@@ -34,21 +34,14 @@ export default function CardsPage() {
           </p>
         </div>
         <IssueCardDialog
-          merchants={merchants.map((m) => ({
-            id: m.id,
-            name: m.name,
-            currency: m.currency,
-          }))}
+          merchants={merchants.map((m) => ({ id: m.id, name: m.name, currency: m.currency }))}
         />
       </div>
 
       {cards.length === 0 ? (
         <div className="border-t border-gray-200 px-4 py-20 text-center dark:border-gray-800">
           <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900">
-            <Wallet
-              className="size-5 text-gray-500 dark:text-gray-500"
-              aria-hidden="true"
-            />
+            <Wallet className="size-5 text-gray-500" aria-hidden="true" />
           </span>
           <p className="mt-3 font-medium text-gray-900 dark:text-gray-50">
             No cards issued yet
@@ -66,9 +59,7 @@ export default function CardsPage() {
                 <TableHeaderCell>Nickname</TableHeaderCell>
                 <TableHeaderCell>Merchant</TableHeaderCell>
                 <TableHeaderCell>Number</TableHeaderCell>
-                <TableHeaderCell className="text-right">
-                  Spend limit
-                </TableHeaderCell>
+                <TableHeaderCell className="text-right">Spend limit</TableHeaderCell>
                 <TableHeaderCell>Status</TableHeaderCell>
                 <TableHeaderCell>Created</TableHeaderCell>
                 <TableHeaderCell className="text-right">Actions</TableHeaderCell>
@@ -85,7 +76,7 @@ export default function CardsPage() {
                       {card.nickname}
                     </Link>
                     {card.category && (
-                      <span className="ml-2 text-xs capitalize text-gray-500 dark:text-gray-500">
+                      <span className="ml-2 text-xs capitalize text-gray-500">
                         {card.category}
                       </span>
                     )}

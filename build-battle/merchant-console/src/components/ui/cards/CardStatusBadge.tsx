@@ -2,38 +2,23 @@ import { Badge } from "@/components/Badge"
 import { CardStatus } from "@/data/types"
 import { cx } from "@/lib/utils"
 
-/**
- * Card status, as a pill. Its own component rather than an overload of
- * ui/payments/StatusBadge — a card's statuses are a different domain and a
- * different state machine.
- */
+/** Card status as a pill. Its own component: a different domain from payments. */
 
-const LABELS: Record<CardStatus, string> = {
-  active: "Active",
-  frozen: "Frozen",
-  cancelled: "Cancelled",
-}
-
-const DOTS: Record<CardStatus, string> = {
-  active: "bg-emerald-600 dark:bg-emerald-400",
-  frozen: "bg-blue-500 dark:bg-blue-500",
-  cancelled: "bg-gray-500 dark:bg-gray-500",
-}
-
-const VARIANTS: Record<CardStatus, "success" | "default" | "neutral"> = {
-  active: "success",
-  frozen: "default",
-  cancelled: "neutral",
+const STYLES: Record<
+  CardStatus,
+  { label: string; dot: string; variant: "success" | "default" | "neutral" }
+> = {
+  active: { label: "Active", dot: "bg-emerald-600 dark:bg-emerald-400", variant: "success" },
+  frozen: { label: "Frozen", dot: "bg-blue-500", variant: "default" },
+  cancelled: { label: "Cancelled", dot: "bg-gray-500", variant: "neutral" },
 }
 
 export function CardStatusBadge({ status }: { status: CardStatus }) {
+  const { label, dot, variant } = STYLES[status]
   return (
-    <Badge variant={VARIANTS[status]} className="rounded-full">
-      <span
-        className={cx("size-1.5 shrink-0 rounded-full", DOTS[status])}
-        aria-hidden="true"
-      />
-      {LABELS[status]}
+    <Badge variant={variant} className="rounded-full">
+      <span className={cx("size-1.5 shrink-0 rounded-full", dot)} aria-hidden="true" />
+      {label}
     </Badge>
   )
 }

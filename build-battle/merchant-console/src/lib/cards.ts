@@ -1,12 +1,9 @@
 import { CardStatus } from "@/data/types"
 
 /**
- * Virtual card primitives: number generation, masking, and the status
- * state machine. Pure — nothing here reads or writes the store, so it can
- * be tested without booting the app.
- *
- * Nothing in this repository may resemble a real PAN. Every number this
- * module produces starts with the 4242 test BIN.
+ * Card number generation, masking, and the status state machine. Pure, so it
+ * tests without booting the app. Every number produced starts with the 4242
+ * test BIN — nothing here may resemble a real PAN.
  */
 
 /** The test BIN. Not configurable — a real BIN must never appear here. */
@@ -15,10 +12,9 @@ export const CARD_BIN = "4242"
 const CARD_NUMBER_LENGTH = 16
 
 /**
- * The Luhn check digit for a partial number, i.e. the digit that makes the
- * whole string pass isLuhnValid. Doubling starts from the right of the
- * finished number, so with the check digit still missing the rightmost
- * digit of `partial` is the one that doubles.
+ * The digit that makes `partial` pass isLuhnValid. Doubling runs from the
+ * right of the finished number, so with the check digit still missing the
+ * rightmost digit of `partial` is the one that doubles.
  */
 export function luhnCheckDigit(partial: string): number {
   let sum = 0
@@ -58,11 +54,9 @@ export function isLuhnValid(cardNumber: string): boolean {
 }
 
 /**
- * A 16-digit virtual card number on the test BIN with a valid check digit.
- *
- * Server-side only. `random` is injectable so tests can pin a number; it
- * defaults to Math.random because these are not secrets and never touch a
- * card network — they exist so the console has something to mask.
+ * A 16-digit number on the test BIN with a valid check digit. Server-side
+ * only. `random` is injectable so tests can pin one; these never touch a card
+ * network and exist so the console has something to mask.
  */
 export function generateCardNumber(random: () => number = Math.random): string {
   const middleLength = CARD_NUMBER_LENGTH - CARD_BIN.length - 1
@@ -83,11 +77,7 @@ export function maskCard(last4: string): string {
   return `•••• ${last4}`
 }
 
-/**
- * The status state machine: active ⇄ frozen, either to cancelled, and
- * cancelled is terminal. Guarded here so the API and the UI cannot
- * disagree about what is legal.
- */
+/** active ⇄ frozen, either to cancelled, cancelled terminal. One source of truth. */
 const TRANSITIONS: Record<CardStatus, readonly CardStatus[]> = {
   active: ["frozen", "cancelled"],
   frozen: ["active", "cancelled"],

@@ -2,15 +2,15 @@
 
 import { Button } from "@/components/Button"
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/Dialog"
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/Drawer"
 import { Input } from "@/components/Input"
 import {
   Select,
@@ -179,15 +179,15 @@ export function IssueCardDialog({ merchants }: { merchants: Merchant[] }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerTrigger asChild>
         <Button className="w-full gap-2 py-1.5 sm:w-fit">
           <Plus className="-ml-0.5 size-4 shrink-0" aria-hidden="true" />
           Issue card
         </Button>
-      </DialogTrigger>
+      </DrawerTrigger>
 
-      <DialogContent>
+      <DrawerContent>
         {issued ? (
           <RevealOnce
             card={issued.card}
@@ -200,13 +200,13 @@ export function IssueCardDialog({ merchants }: { merchants: Merchant[] }) {
           />
         ) : (
           <form onSubmit={submit}>
-            <DialogHeader>
-              <DialogTitle>Issue a virtual card</DialogTitle>
-              <DialogDescription>
+            <DrawerHeader>
+              <DrawerTitle>Issue a virtual card</DrawerTitle>
+              <DrawerDescription>
                 The number is shown once, right after it is created. Nobody can
                 read it back afterwards.
-              </DialogDescription>
-            </DialogHeader>
+              </DrawerDescription>
+            </DrawerHeader>
 
             <div className="mt-6 space-y-4">
               <Field id={field("nickname")} label="Nickname" error={errors.nickname}>
@@ -313,20 +313,20 @@ export function IssueCardDialog({ merchants }: { merchants: Merchant[] }) {
               </p>
             )}
 
-            <DialogFooter className="mt-6">
-              <DialogClose asChild>
+            <DrawerFooter className="mt-6">
+              <DrawerClose asChild>
                 <Button type="button" variant="secondary" className="py-1.5">
                   Cancel
                 </Button>
-              </DialogClose>
+              </DrawerClose>
               <Button type="submit" className="py-1.5" isLoading={submitting}>
                 Issue card
               </Button>
-            </DialogFooter>
+            </DrawerFooter>
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   )
 }
 
@@ -344,13 +344,13 @@ function RevealOnce({
 }) {
   return (
     <div>
-      <DialogHeader>
-        <DialogTitle>Card issued</DialogTitle>
-        <DialogDescription>
+      <DrawerHeader>
+        <DrawerTitle>Card issued</DrawerTitle>
+        <DrawerDescription>
           Copy the number now. This is the only time it will be shown —
           everywhere else it reads {maskCard(card.last4)}.
-        </DialogDescription>
-      </DialogHeader>
+        </DrawerDescription>
+      </DrawerHeader>
 
       <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
         <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -366,11 +366,11 @@ function RevealOnce({
 
       <p className="mt-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400">
         <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-        Closing this dialog discards the number. It is not stored and cannot be
+        Closing this panel discards the number. It is not stored and cannot be
         shown again.
       </p>
 
-      <DialogFooter className="mt-6">
+      <DrawerFooter className="mt-6">
         <Button type="button" variant="secondary" className="gap-2 py-1.5" onClick={onCopy}>
           {copied ? (
             <Check className="size-4 shrink-0" aria-hidden="true" />
@@ -379,12 +379,12 @@ function RevealOnce({
           )}
           {copied ? "Copied" : "Copy number"}
         </Button>
-        <DialogClose asChild>
+        <DrawerClose asChild>
           <Button type="button" className="py-1.5">
             Done
           </Button>
-        </DialogClose>
-      </DialogFooter>
+        </DrawerClose>
+      </DrawerFooter>
     </div>
   )
 }

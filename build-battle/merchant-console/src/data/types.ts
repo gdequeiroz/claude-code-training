@@ -94,31 +94,26 @@ export interface PaymentFilters {
   direction?: "asc" | "desc"
 }
 
-/** One entry in a card's audit trail. Append-only. */
+/** One entry in a card's audit trail. Append-only. `from` is null when issued. */
 export interface CardEvent {
-  /** ISO 8601, always UTC. */
   at: string
-  /** Null for the issuing event, which has no prior status. */
   from: CardStatus | null
   to: CardStatus
   note: string
 }
 
 /**
- * An issued virtual card.
- *
- * There is deliberately no field for the full number. It exists in the
- * creation response and nowhere else, so there is nothing here to leak.
+ * An issued virtual card. There is deliberately no field for the full number:
+ * it exists in the creation response and nowhere else, so nothing here leaks.
  */
 export interface Card {
   id: string
   nickname: string
   merchantId: string
-  /** The only part of the number that is ever stored. */
+  /** The only part of the number ever stored. */
   last4: string
-  /** Integer minor units. Never a float. */
+  /** Integer minor units, both of them. Never floats. */
   spendLimit: number
-  /** Integer minor units. Authorized spend against this card so far. */
   spent: number
   currency: Currency
   status: CardStatus

@@ -9,9 +9,7 @@ export async function GET(
 ) {
   const { id } = await params
   const card = cardById(id)
-  if (!card) {
-    return NextResponse.json({ message: "No such card." }, { status: 404 })
-  }
+  if (!card) return NextResponse.json({ message: "No such card." }, { status: 404 })
   return NextResponse.json({ card })
 }
 
@@ -29,20 +27,15 @@ export async function PATCH(
   }
 
   const status = (body as { status?: unknown })?.status
-  if (!isCardStatus(status)) {
+  if (!isCardStatus(status))
     return NextResponse.json(
       { message: "Status must be active, frozen, or cancelled." },
       { status: 400 },
     )
-  }
 
   const result = transitionCard(id, status)
-  if (!result.ok) {
-    return NextResponse.json(
-      { message: result.message },
-      { status: result.status },
-    )
-  }
+  if (!result.ok)
+    return NextResponse.json({ message: result.message }, { status: result.status })
 
   return NextResponse.json({ card: result.card })
 }
