@@ -104,6 +104,10 @@ export function validateIssueCard(
   const currency = input.currency
   if (!CARD_CURRENCIES.includes(currency as Currency)) {
     errors.currency = `Currency must be one of ${CARD_CURRENCIES.join(", ")}.`
+  } else if (merchant && currency !== merchant.currency) {
+    // A card settles in its merchant's currency. The form defaults to it,
+    // but the form is a convenience — this is the half that enforces it.
+    errors.currency = `${merchant.name} settles in ${merchant.currency}, so the card must be ${merchant.currency}.`
   }
 
   const category =
