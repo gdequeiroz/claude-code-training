@@ -11,6 +11,9 @@ export type DisputeStatus = "needs_response" | "under_review" | "won" | "lost"
 
 export type PayoutStatus = "paid" | "in_transit" | "pending"
 
+/** Which payments an export covers: the table's active filters, or everything. */
+export type ExportScope = "current" | "all"
+
 export interface Merchant {
   id: string
   name: string

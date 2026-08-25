@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest"
 import { Payment } from "@/data/types"
-import { EXPORT_COLUMNS, exportFilename, toCsv } from "./csv"
+import {
+  DEFAULT_EXPORT_COLUMNS,
+  EXPORT_COLUMNS,
+  exportFilename,
+  parseExportColumns,
+  parseExportScope,
+  toCsv,
+} from "./csv"
 
 /**
  * The export is the file ops hands to a merchant, so a broken cell is a
@@ -76,10 +83,89 @@ describe("toCsv", () => {
   })
 })
 
+describe("column selection", () => {
+  it("writes a chosen subset in the order it was requested", () => {
+    const columns = parseExportColumns("currency,id,amount")
+    expect(columns).toEqual(["currency", "id", "amount"])
+    expect(toCsv([payment], columns!)).toBe(
+      ["currency,id,amount", "USD,pay_0001,$250.00"].join("\n"),
+    )
+  })
+
+  it("leaves the card last four out by default, so merchant files need no cleanup", () => {
+    expect(DEFAULT_EXPORT_COLUMNS).not.toContain("last4")
+    const header = toCsv([payment], parseExportColumns(null)!).split("\n")[0]
+    expect(header).not.toContain("last4")
+    expect(header.split(",")).toHaveLength(EXPORT_COLUMNS.length - 1)
+  })
+
+  it("still exports the last four when ops asks for it", () => {
+    expect(toCsv([payment], parseExportColumns("id,last4")!)).toBe(
+      ["id,last4", "pay_0001,4242"].join("\n"),
+    )
+  })
+
+  it("returns null for an empty selection rather than a file with no columns", () => {
+    expect(parseExportColumns("")).toBeNull()
+    expect(parseExportColumns(",,")).toBeNull()
+    expect(parseExportColumns("   ")).toBeNull()
+  })
+
+  it("drops names that are not columns, and returns null when none survive", () => {
+    expect(parseExportColumns("id,payments; DROP TABLE payments")).toEqual([
+      "id",
+    ])
+    expect(parseExportColumns("../../etc/passwd")).toBeNull()
+  })
+
+  it("collapses duplicates so a column cannot be written twice", () => {
+    expect(parseExportColumns("id,id,amount,id")).toEqual(["id", "amount"])
+  })
+})
+
+describe("parseExportScope", () => {
+  it("only recognises all, and falls back to the narrower scope", () => {
+    expect(parseExportScope("all")).toBe("all")
+    expect(parseExportScope("current")).toBe("current")
+    expect(parseExportScope("everything")).toBe("current")
+    expect(parseExportScope(null)).toBe("current")
+  })
+})
+
 describe("exportFilename", () => {
   it("stamps the UTC date, so two exports on the same day collide by design", () => {
     expect(exportFilename(new Date("2026-03-14T23:00:00.000Z"))).toBe(
       "payments-2026-03-14.csv",
+    )
+  })
+
+  const date = new Date("2026-08-13T23:00:00.000Z")
+
+  it("names the status when the table is filtered to one", () => {
+    expect(
+      exportFilename(date, { scope: "current", status: "disputed" }),
+    ).toBe("payments-disputed-2026-08-13.csv")
+  })
+
+  it("says all when the scope is every payment, whatever the filters were", () => {
+    expect(exportFilename(date, { scope: "all", status: "disputed" })).toBe(
+      "payments-all-2026-08-13.csv",
+    )
+  })
+
+  it("says filtered when something other than status is narrowing it", () => {
+    expect(
+      exportFilename(date, {
+        scope: "current",
+        status: "all",
+        hasOtherFilters: true,
+      }),
+    ).toBe("payments-filtered-2026-08-13.csv")
+  })
+
+  it("says current when nothing is narrowing it", () => {
+    expect(exportFilename(date, { scope: "current", status: "all" })).toBe(
+      "payments-current-2026-08-13.csv",
     )
   })
 })
