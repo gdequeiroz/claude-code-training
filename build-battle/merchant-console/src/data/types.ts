@@ -11,6 +11,17 @@ export type DisputeStatus = "needs_response" | "under_review" | "won" | "lost"
 
 export type PayoutStatus = "paid" | "in_transit" | "pending"
 
+/** active ⇄ frozen, either to cancelled, and cancelled is terminal. */
+export type CardStatus = "active" | "frozen" | "cancelled"
+
+/** What a card is allowed to be spent on. Null means no lock. */
+export type CardCategory =
+  | "advertising"
+  | "software"
+  | "travel"
+  | "contractors"
+  | "utilities"
+
 export interface Merchant {
   id: string
   name: string
@@ -81,4 +92,38 @@ export interface PaymentFilters {
   pageSize?: number
   sort?: "createdAt" | "amount"
   direction?: "asc" | "desc"
+}
+
+/** One entry in a card's audit trail. Append-only. */
+export interface CardEvent {
+  /** ISO 8601, always UTC. */
+  at: string
+  /** Null for the issuing event, which has no prior status. */
+  from: CardStatus | null
+  to: CardStatus
+  note: string
+}
+
+/**
+ * An issued virtual card.
+ *
+ * There is deliberately no field for the full number. It exists in the
+ * creation response and nowhere else, so there is nothing here to leak.
+ */
+export interface Card {
+  id: string
+  nickname: string
+  merchantId: string
+  /** The only part of the number that is ever stored. */
+  last4: string
+  /** Integer minor units. Never a float. */
+  spendLimit: number
+  /** Integer minor units. Authorized spend against this card so far. */
+  spent: number
+  currency: Currency
+  status: CardStatus
+  category: CardCategory | null
+  /** ISO 8601, always UTC. */
+  createdAt: string
+  events: CardEvent[]
 }

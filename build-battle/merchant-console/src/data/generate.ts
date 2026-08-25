@@ -1,5 +1,10 @@
 import { merchants } from "./merchants"
+import { generateCardNumber, lastFour } from "@/lib/cards"
 import {
+  Card,
+  CardCategory,
+  CardEvent,
+  CardStatus,
   Currency,
   Dispute,
   Payment,
@@ -148,7 +153,90 @@ export function generate() {
   }
 
   const payouts = generatePayouts(payments)
-  return { payments, refunds, disputes, payouts }
+  const cards = generateCards()
+  return { payments, refunds, disputes, payouts, cards }
+}
+
+const CARD_NICKNAMES = [
+  "Ad spend — Meta",
+  "Ad spend — Google",
+  "Contractor tools",
+  "Vendor subscriptions",
+  "Travel — sales team",
+  "Cloud hosting",
+]
+
+const CARD_CATEGORIES: CardCategory[] = [
+  "advertising",
+  "advertising",
+  "contractors",
+  "software",
+  "travel",
+  "utilities",
+]
+
+/**
+ * Seeded cards, so the list, the detail view, and the spend bar have
+ * something real to show before anyone issues one. Numbers go through the
+ * same generator as a live issue, and only the last four is kept — a seed
+ * card is no more able to leak a PAN than an issued one.
+ */
+function generateCards(): Card[] {
+  const cards: Card[] = []
+  const statuses: CardStatus[] = [
+    "active",
+    "active",
+    "frozen",
+    "active",
+    "active",
+    "cancelled",
+  ]
+  // Spend as a fraction of the limit. The 0.87 exists so the amber
+  // past-80% threshold on the detail view has a case that trips it.
+  const spendRatios = [0.87, 0.34, 0.12, 0.61, 0.95, 0.48]
+
+  for (let i = 0; i < CARD_NICKNAMES.length; i++) {
+    const merchant = merchants[i % merchants.length]
+    const spendLimit = between(5, 40) * 10000
+    const issuedAt = new Date(
+      GENERATED_AT.getTime() - between(10, 90) * 24 * 60 * 60 * 1000,
+    )
+    const status = statuses[i]
+    const events: CardEvent[] = [
+      {
+        at: issuedAt.toISOString(),
+        from: null,
+        to: "active" as CardStatus,
+        note: `Issued with a ${(spendLimit / 100).toFixed(0)} ${merchant.currency} limit`,
+      },
+    ]
+    if (status !== "active") {
+      events.push({
+        at: new Date(
+          issuedAt.getTime() + between(1, 5) * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+        from: "active" as CardStatus,
+        to: status,
+        note: status === "frozen" ? "Frozen by ops" : "Cancelled by ops",
+      })
+    }
+
+    cards.push({
+      id: `card_${pad(i + 1, 4)}`,
+      nickname: CARD_NICKNAMES[i],
+      merchantId: merchant.id,
+      last4: lastFour(generateCardNumber(rand)),
+      spendLimit,
+      spent: Math.round(spendLimit * spendRatios[i]),
+      currency: merchant.currency,
+      status,
+      category: CARD_CATEGORIES[i],
+      createdAt: issuedAt.toISOString(),
+      events,
+    })
+  }
+
+  return cards
 }
 
 function generatePayouts(payments: Payment[]): Payout[] {
